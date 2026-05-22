@@ -1,50 +1,106 @@
-# Welcome to your Expo app 👋
+---Project Packages Need To Install (ChattingGO)---
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Install dependencies
+npm install
 
-## Get started
+# Navigation 
+npm install @react-navigation/native 
 
-1. Install dependencies
+# Async Storage   
+npm install @react-native-async-storage/async-storage 
 
-   ```bash
-   npm install
-   ```
+# Image Picking 
+npm install expo-image-picker 
 
-2. Start the app
+# Safe Area Handling 
+npm install react-native-safe-area-context 
 
-   ```bash
-   npx expo start
-   ```
+# Icons 
+npm install react-native-vector-icons 
 
-In the output, you'll find options to open the app in a
+# Supabase 
+npm install @supabase/supabase-js 
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+# Buffer polyfill 
+npm install buffer 
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
 
-When you're ready, run:
+---Supabase TableS And Buckets Details---
 
-```bash
-npm run reset-project
-```
+Supabase Tables: 
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+# 1.profiles
 
-## Learn more
+create table public.profiles ( 
+id uuid not null, 
+username text null, 
+name text null, 
+avatar_url text null, 
+online_status boolean null default false, 
+last_seen timestamp with time zone null default now(), 
+created_at timestamp with time zone null default now(), 
+updated_at text null, 
+constraint profiles_pkey primary key (id), 
+constraint profiles_username_key unique (username), 
+constraint profiles_id_fkey foreign KEY (id) references auth.users (id) 
+) TABLESPACE pg_default; 
 
-To learn more about developing your project with Expo, look at the following resources:
+# 2.messages 
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+create table public.messages ( 
+id uuid not null default gen_random_uuid (), 
+chat_id uuid null, 
+sender_id uuid null, 
+content text not null, 
+created_at timestamp with time zone null default now(), 
+image_url text null, 
+constraint messages_pkey primary key (id), 
+constraint messages_chat_id_fkey foreign KEY (chat_id) references chats (id) on 
+delete CASCADE, 
+constraint messages_sender_id_fkey foreign KEY (sender_id) references profiles (id) 
+) TABLESPACE pg_default; 
+create index IF not exists idx_messages_chat_id on public.messages using btree 
+(chat_id) TABLESPACE pg_default; 
+create index IF not exists idx_messages_created_at on public.messages using btree 
+(created_at) TABLESPACE pg_default; 
 
-## Join the community
+# 3.chats 
 
-Join our community of developers creating universal apps.
+create table public.chats ( 
+id uuid not null default gen_random_uuid (), 
+participant1_fkey uuid null, 
+participant2_fkey uuid null, 
+created_at timestamp with time zone null default now(), 
+updated_at timestamp with time zone null default now(), 
+constraint chats_pkey primary key (id), 
+constraint chats_participant1_fkey_participant2_fkey_key unique (participant1_fkey, 
+participant2_fkey), 
+constraint chats_participant1_fkey foreign KEY (participant1_fkey) references profiles 
+(id), 
+constraint chats_participant1_fkey_fkey foreign KEY (participant1_fkey) references 
+profiles (id), 
+constraint chats_participant2_fkey foreign KEY (participant2_fkey) references profiles 
+(id), 
+constraint chats_participant2_fkey_fkey foreign KEY (participant2_fkey) references 
+profiles (id) 
+) TABLESPACE pg_default; 
+create index IF not exists idx_chats_updated_at on public.chats using btree 
+(updated_at) TABLESPACE pg_default;
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Supabase Buckets: 
+
+1. avatars (for user profile image store)
+(RLS)
+-Select (public)
+-Update (authenticated)
+-Insert (authenticated)
+
+2. files (for user image shearing through chats)
+(RLS)
+-Select (public)
+-Update (authenticated)
+-Insert (authenticated)
+
+
+
